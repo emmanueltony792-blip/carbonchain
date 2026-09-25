@@ -4,35 +4,17 @@ import {
   Injectable,
   Logger,
   NestInterceptor,
+  SetMetadata,
 } from '@nestjs/common';
 import { Observable, from } from 'rxjs';
 import { createHash, randomBytes } from 'crypto';
 import { CacheService } from './cache.service';
 
-/**
- * TTL (seconds) for the completed-response record.
- * Completed results are replayed for 24 h — long enough for any client retry
- * window but short enough to avoid Redis memory pressure.
- */
-const COMPLETED_TTL_SECONDS = 24 * 60 * 60; // 24 h
+/** Method decorator: marks a route as requiring Idempotency-Key enforcement. */
+export const Idempotent = () => SetMetadata('idempotent', true);
 
-/**
- * Issue #915 — Short processing lease TTL (seconds).
- *
- * Previously a `processing` record inherited the full 24 h TTL, which meant a
- * crashed worker silently black-holed every retry for up to 24 h.
- *
- * Now the lease key is separate from the completed-response key and has this
- * short TTL.  After the TTL expires any replica may take over and recompute.
- */
-const PROCESSING_LEASE_TTL_SECONDS = 60; // 60 s
-
-/**
- * How long a concurrent waiter polls for the in-flight result before giving
- * up with a 409.  Must be less than PROCESSING_LEASE_TTL_SECONDS so waiters
- * see the lease expire and can attempt takeover if needed.
- */
-const PROCESSING_WAIT_TIMEOUT_MS = 30_000; // 30 s
+const IDEMPOTENCY_TTL_SECONDS = 24 * 60 * 60; // 24h
+const PROCESSING_WAIT_TIMEOUT_MS = 10_000;
 const PROCESSING_POLL_INTERVAL_MS = 250;
 
 // ── Redis key helpers ──────────────────────────────────────────────────────
