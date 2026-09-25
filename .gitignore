@@ -74,6 +74,8 @@ playwright-report/
 cypress/screenshots/
 cypress/videos/
 cypress/downloads/
+# prom-client snapshot files
+*.prom
 
 # Build artifacts
 *.js.map

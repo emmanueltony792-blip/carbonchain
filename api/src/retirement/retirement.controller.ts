@@ -43,7 +43,7 @@ export class RetirementController {
   @Post()
   retire(
     @Body() dto: FullRetireDto,
-  ): Promise<{ retirementId: string; certificateIpfsHash: string }> {
+  ): Promise<{ retirementId: string; certificateIpfsHash: string; estimatedFeeStroops?: number }> {
     return this.retirementService.retire(dto);
   }
 

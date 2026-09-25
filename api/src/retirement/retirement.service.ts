@@ -109,7 +109,7 @@ export class RetirementService {
     creditId: string,
     dto: RetireDto,
     buyerPublicKey: string,
-  ): Promise<{ retirementId: string; certificateIpfsHash: string }> {
+  ): Promise<{ retirementId: string; certificateIpfsHash: string; estimatedFeeStroops?: number }> {
     const credit = await this.creditRepo.findById(creditId);
     if (!credit) {
       throw new NotFoundException(`Credit ${creditId} not found`);
@@ -152,7 +152,7 @@ export class RetirementService {
    */
   async retire(
     dto: FullRetireDto,
-  ): Promise<{ retirementId: string; certificateIpfsHash: string }> {
+  ): Promise<{ retirementId: string; certificateIpfsHash: string; estimatedFeeStroops?: number }> {
     this.logger.log(
       `Retiring credit ${dto.creditId} for ${dto.buyerPublicKey}`,
     );
@@ -318,7 +318,15 @@ export class RetirementService {
       count: 1,
     } satisfies RetirementCompletedEvent);
 
-    return { retirementId, certificateIpfsHash: certificateIpfsHash ?? '' };
+    // Issue #917 — surface the simulated fee so the caller and DTOs can show
+    // an accurate, non-constant fee estimate driven by minResourceFee × multiplier.
+    const estimatedFeeStroops = (response as unknown as { estimatedFeeStroops?: number }).estimatedFeeStroops;
+
+    return {
+      retirementId,
+      certificateIpfsHash: certificateIpfsHash ?? '',
+      ...(estimatedFeeStroops !== undefined ? { estimatedFeeStroops } : {}),
+    };
   }
 
   /**

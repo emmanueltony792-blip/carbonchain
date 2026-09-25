@@ -41,7 +41,7 @@ export class CreditsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @UseGuards(JwtAuthGuard)
   @Post('issue')
-  issueCredit(@Body() dto: IssueCreditDto): Promise<{ creditId: string }> {
+  issueCredit(@Body() dto: IssueCreditDto): Promise<{ creditId: string; estimatedFeeStroops?: number }> {
     return this.creditsService.issueCredit(dto);
   }
 
